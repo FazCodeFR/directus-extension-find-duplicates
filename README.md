@@ -9,19 +9,24 @@ A custom **Directus interface** to easily detect duplicate entries within a coll
 - Select any collection.
 - Choose one or multiple fields to check for duplicates.
 - Fetch and display groups of items sharing identical values.
-- Direct links to open duplicated items in the Directus admin panel.
+- Direct links to open duplicated items.
+- Internationalization : Available in English and French.
 
 ---
 
-## 🌍 Internationalization
+## 📦 Installation Via Directus Marketplace
+Install directly from the **Directus Marketplace**:
+[http://YourDirectusUrl:8055/admin/settings/marketplace/extension/your-extension-id](http://YourDirectusUrl:8055/admin/settings/marketplace/extension/your-extension-id)
+Or search for `"find duplicates"` in the marketplace.
 
-Available in **English** and **French**. The interface automatically uses the default language configured in your Directus settings.
+Don't forget to go to settings > settings > Modules bars > activate the "Find Duplicates" module to display it in the side menu.
+
 
 ---
 
 ## 📸 Interface Preview
 
-This interface can be used in a custom admin view or moderation dashboard to quickly identify and manage duplicate records.
+![Directus Module Extension Duplicates](https://github.com/FazCodeFR/directus-extension-find-duplicates/raw/main/Screenshot.png)
 
 ---
 
