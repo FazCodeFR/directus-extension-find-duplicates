@@ -96,7 +96,6 @@ watch(selectedFields, () => {
   alreadySearched.value = false;
 });
 
-
 const collections = computed(() => {
   return Object.values(collectionsStore.collections)
     .filter((col) => !col.system)
@@ -132,7 +131,7 @@ async function findDuplicates() {
 
   if (!fields.length) return;
 
-  const { data } = await api.get(/items/${collection}, {
+  const { data } = await api.get( `/items/${collection}`, {
     params: {
       limit: -1,
       fields: ['id', ...fields],
