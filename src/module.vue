@@ -49,7 +49,7 @@
         <ul>
           <li v-for="item in group.items" :key="item.id">
             <a
-              :href="/admin/content/${selectedCollection}/${item.id}"
+              :href="`/admin/content/${selectedCollection}/${item.id}`"
               class="text-primary underline"
               target="_blank"
             >
