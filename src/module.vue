@@ -66,7 +66,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useApi, useStores } from '@directus/extensions-sdk';
 import { useI18n } from 'vue-i18n';
 import { messages, resolveLocale } from './i18nModule';
@@ -90,6 +90,13 @@ const { t } = useI18n({
   locale: resolveLocale(defaultLanguage),
   messages,
 });
+
+
+watch(selectedFields, () => {
+  duplicates.value = [];
+  alreadySearched.value = false;
+});
+
 
 const collections = computed(() => {
   return Object.values(collectionsStore.collections)
@@ -126,31 +133,44 @@ async function findDuplicates() {
 
   if (!fields.length) return;
 
-  const { data } = await api.get(`/items/${collection}`, {
-    params: {
-      limit: -1,
-      fields: ['id', ...fields],
-    },
-  });
+  // 1. Utilise groupBy pour détecter les groupes avec count > 1
+  const groupParams = new URLSearchParams();
+  fields.forEach((field) => groupParams.append('groupBy[]', field));
+  groupParams.append('aggregate[count]', '*');
+  groupParams.append('limit', '-1');
 
-  const map = {};
-  for (const item of data.data) {
-    const key = fields
-      .map((f) => (item[f] ?? '').toString().trim().toLowerCase())
-      .join('||');
+  const { data: groupData } = await api.get(`/items/${collection}?${groupParams.toString()}`);
 
-    if (!key) continue;
+  const duplicateGroups = groupData.data.filter((g) => g.count > 1);
 
-    if (!map[key]) map[key] = [];
-    map[key].push(item);
+  // 2. Pour chaque groupe, on récupère les items correspondants
+  const result = [];
+
+  for (const group of duplicateGroups) {
+    const filter = {
+      _and: fields.map((field) => ({
+        [field]: { _eq: group[field] }
+      })),
+    };
+
+    const { data: itemsData } = await api.get(`/items/${collection}`, {
+      params: {
+        limit: -1,
+        filter,
+        fields: ['id', ...fields],
+      },
+    });
+
+    result.push({
+      value: fields.map((f) => group[f]).join(' | '),
+      items: itemsData.data,
+    });
   }
 
-  duplicates.value = Object.entries(map)
-    .filter(([, items]) => items.length > 1)
-    .map(([value, items]) => ({ value, items }));
-
+  duplicates.value = result;
   alreadySearched.value = true;
 }
+
 </script>
 
 <style scoped>
