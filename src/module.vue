@@ -1,4 +1,3 @@
-
 <template>
   <private-view :title="t('title')" class="find-duplicates-ui">
     <div class="step">
@@ -50,7 +49,7 @@
         <ul>
           <li v-for="item in group.items" :key="item.id">
             <a
-              :href="`/admin/content/${selectedCollection}/${item.id}`"
+              :href="/admin/content/${selectedCollection}/${item.id}"
               class="text-primary underline"
               target="_blank"
             >
@@ -133,44 +132,31 @@ async function findDuplicates() {
 
   if (!fields.length) return;
 
-  // 1. Utilise groupBy pour détecter les groupes avec count > 1
-  const groupParams = new URLSearchParams();
-  fields.forEach((field) => groupParams.append('groupBy[]', field));
-  groupParams.append('aggregate[count]', '*');
-  groupParams.append('limit', '-1');
+  const { data } = await api.get(/items/${collection}, {
+    params: {
+      limit: -1,
+      fields: ['id', ...fields],
+    },
+  });
 
-  const { data: groupData } = await api.get(`/items/${collection}?${groupParams.toString()}`);
+  const map = {};
+  for (const item of data.data) {
+    const key = fields
+      .map((f) => (item[f] ?? '').toString().trim().toLowerCase())
+      .join('||');
 
-  const duplicateGroups = groupData.data.filter((g) => g.count > 1);
+    if (!key) continue;
 
-  // 2. Pour chaque groupe, on récupère les items correspondants
-  const result = [];
-
-  for (const group of duplicateGroups) {
-    const filter = {
-      _and: fields.map((field) => ({
-        [field]: { _eq: group[field] }
-      })),
-    };
-
-    const { data: itemsData } = await api.get(`/items/${collection}`, {
-      params: {
-        limit: -1,
-        filter,
-        fields: ['id', ...fields],
-      },
-    });
-
-    result.push({
-      value: fields.map((f) => group[f]).join(' | '),
-      items: itemsData.data,
-    });
+    if (!map[key]) map[key] = [];
+    map[key].push(item);
   }
 
-  duplicates.value = result;
+  duplicates.value = Object.entries(map)
+    .filter(([, items]) => items.length > 1)
+    .map(([value, items]) => ({ value, items }));
+
   alreadySearched.value = true;
 }
-
 </script>
 
 <style scoped>
