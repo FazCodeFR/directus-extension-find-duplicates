@@ -14,12 +14,11 @@ A custom **Directus interface** to easily detect duplicate entries within a coll
 
 ---
 
-## 📦 Installation Via Directus Marketplace
-Install directly from the **Directus Marketplace**:
-[http://YourDirectusUrl:8055/admin/settings/marketplace/extension/your-extension-id](http://YourDirectusUrl:8055/admin/settings/marketplace/extension/your-extension-id)
-Or search for `"find duplicates"` in the marketplace.
+## 📦 Installation via Marketplace (✅ Recommended )
 
-Don't forget to go to settings > settings > Modules bars > activate the "Find Duplicates" module to display it in the side menu.
+Search for "Find Duplicates" or "Fazcode" in the Marketplace of your app settings, navigate to the extension page, and click "Install Extension"
+
+Don't forget to go to **Settings** > **Project Settings** > **Modules bars** > activate the "Find Duplicates" module to display it in the side menu.
 
 
 ---
