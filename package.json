@@ -4,7 +4,7 @@
 	"description": "Find duplicates in Directus collections based on specified fields.",
 	"author": "FazCode",
 	"license": "MIT",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"type": "module",
 	"icon": "search",
 	"keywords": [
