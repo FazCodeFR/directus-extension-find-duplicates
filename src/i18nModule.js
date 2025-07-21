@@ -28,7 +28,7 @@ export const messages = {
     value: 'Valeur',
     times: 'fois',
   },
-  en: {
+  tr: {
     title: 'Yinelenenleri Bul',
     selectCollection: 'Bir koleksiyon seçin',
     chooseCollection: 'Bir koleksiyon seçin',
