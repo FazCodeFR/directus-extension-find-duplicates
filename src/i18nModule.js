@@ -28,6 +28,20 @@ export const messages = {
     value: 'Valeur',
     times: 'fois',
   },
+  en: {
+    title: 'Yinelenenleri Bul',
+    selectCollection: 'Bir koleksiyon seçin',
+    chooseCollection: 'Bir koleksiyon seçin',
+    selectField: 'Bir alan seçin',
+    chooseField: 'Bir alan seçin',
+    findDuplicates: 'Yinelenenleri Bul',
+    noDuplicates: 'Hiç yineleyen değer yok 🎉',
+    duplicatesFound: 'Yinelenen değerler bulundu',
+    openItem: 'Kaydı Aç',
+    duplicatesFor: 'Yinelenenler için',
+    value: 'Değer',
+    times: 'tekrar',
+  },
 };
 
 
