@@ -35,7 +35,7 @@
 		"vue-i18n": "^11.1.9"
 	},
 	"devDependencies": {
-		"@directus/extensions-sdk": "14.0.0",
+		"@directus/extensions-sdk": "15.0.0",
 		"vue": "^3.5.17"
 	},
 	"main": "src/index.js",
