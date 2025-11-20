@@ -45,10 +45,10 @@
     <div v-if="duplicates.length > 0" class="step">
       <h2>{{ t('duplicatesFound') }} ({{ duplicates.length }})</h2>
       <div class="duplicates-list">
-        <v-card v-for="(group, index) in duplicates" :key="index" class="p-4 duplicate-group">
-        <div class="font-bold mb-2">
+        <v-card v-for="(group, index) in duplicates" :key="index" class="duplicate-group">
+        <div class="duplicate-group-header">
           {{ t('duplicatesFor') }}:
-          <span class="ml-2">
+          <span class="duplicate-group-values">
             {{ selectedFields.map(f => group.items[0][f]).join(' | ') }}
           </span>
           ({{ group.items.length }} {{ t('times') }})
@@ -56,26 +56,28 @@
 
         <ul>
           <li v-for="(item, itemIndex) in group.items" :key="item.id" class="duplicate-item">
-            <a
-              :href="`/admin/content/${selectedCollection}/${item.id}`"
-              class="text-primary underline"
-              target="_blank"
-            >
-              {{ t('openItem') }} #{{ item.id }}
-            </a>
-            <v-button
-              v-if="itemIndex > 0"
-              :disabled="deletingItems.has(item.id)"
-              @click="deleteItem(item.id, index)"
-              icon
-              small
-              rounded
-              secondary
-              class="delete-button"
-              :title="deletingItems.has(item.id) ? t('deleting') : t('delete')"
-            >
-              <v-icon name="delete" />
-            </v-button>
+            <div class="duplicate-item-content">
+              <a
+                :href="`/admin/content/${selectedCollection}/${item.id}`"
+                class="text-primary underline"
+                target="_blank"
+              >
+                {{ t('openItem') }} #{{ item.id }}
+              </a>
+              <v-button
+                v-if="itemIndex > 0"
+                :disabled="deletingItems.has(item.id)"
+                @click="deleteItem(item.id, index)"
+                icon
+                small
+                rounded
+                secondary
+                class="delete-button"
+                :title="deletingItems.has(item.id) ? t('deleting') : t('delete')"
+              >
+                <v-icon name="delete" />
+              </v-button>
+            </div>
           </li>
         </ul>
         </v-card>
@@ -282,6 +284,16 @@ async function deleteAllDuplicates() {
 
 .duplicate-group {
   margin-bottom: 0;
+  padding: 16px;
+}
+
+.duplicate-group-header {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.duplicate-group-values {
+  margin-left: 8px;
 }
 
 .text-primary {
@@ -304,11 +316,13 @@ async function deleteAllDuplicates() {
 }
 
 .duplicate-item {
+  list-style: disc;
+}
+
+.duplicate-item-content {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 8px;
-  list-style: none;
 }
 
 .delete-button {
