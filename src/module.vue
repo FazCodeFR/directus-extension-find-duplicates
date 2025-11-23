@@ -25,9 +25,16 @@
       />
     </div>
 
-    <div class="step">
+    <div class="step button-group">
       <v-button @click="findDuplicates" :disabled="selectedFields.length === 0">
         {{ t('findDuplicates') }}
+      </v-button>
+      <v-button
+        v-if="duplicates.length > 0"
+        @click="deleteAllDuplicates"
+        :disabled="deletingAll"
+      >
+        {{ deletingAll ? t('deletingAll') : t('deleteAllDuplicates') }}
       </v-button>
     </div>
 
@@ -37,29 +44,44 @@
 
     <div v-if="duplicates.length > 0" class="step">
       <h2>{{ t('duplicatesFound') }} ({{ duplicates.length }})</h2>
-      <v-card v-for="(group, index) in duplicates" :key="index" class="p-4">
-        <div class="font-bold mb-2">
+      <div class="duplicates-list">
+        <v-card v-for="(group, index) in duplicates" :key="index" class="duplicate-group">
+        <div class="duplicate-group-header">
           {{ t('duplicatesFor') }}:
-          <span class="ml-2">
+          <span class="duplicate-group-values">
             {{ selectedFields.map(f => group.items[0][f]).join(' | ') }}
           </span>
           ({{ group.items.length }} {{ t('times') }})
         </div>
 
         <ul>
-          <li v-for="item in group.items" :key="item.id">
-            <a
-              :href="`/admin/content/${selectedCollection}/${item.id}`"
-              class="text-primary underline"
-              target="_blank"
-            >
-              {{ t('openItem') }} #{{ item.id }}
-            </a>
+          <li v-for="(item, itemIndex) in group.items" :key="item.id" class="duplicate-item">
+            <div class="duplicate-item-content">
+              <a
+                :href="`/admin/content/${selectedCollection}/${item.id}`"
+                class="text-primary underline"
+                target="_blank"
+              >
+                {{ t('openItem') }} #{{ item.id }}
+              </a>
+              <v-button
+                v-if="itemIndex > 0"
+                :disabled="deletingItems.has(item.id)"
+                @click="deleteItem(item.id, index)"
+                icon
+                small
+                rounded
+                secondary
+                class="delete-button"
+                :title="deletingItems.has(item.id) ? t('deleting') : t('delete')"
+              >
+                <v-icon name="delete" />
+              </v-button>
+            </div>
           </li>
         </ul>
-      </v-card>
-
-
+        </v-card>
+      </div>
     </div>
   </private-view>
 </template>
@@ -79,6 +101,8 @@ const selectedCollection = ref(null);
 const selectedFields = ref([]);
 const duplicates = ref([]);
 const alreadySearched = ref(false);
+const deletingItems = ref(new Set());
+const deletingAll = ref(false);
 
 
 const { useSettingsStore } = useStores();
@@ -156,12 +180,120 @@ async function findDuplicates() {
 
   alreadySearched.value = true;
 }
+
+async function deleteItem(itemId, groupIndex) {
+  if (!confirm(t('confirmDelete'))) {
+    return;
+  }
+
+  deletingItems.value.add(itemId);
+
+  try {
+    await api.delete(`/items/${selectedCollection.value}/${itemId}`);
+    
+    // Find and remove the item from the duplicates array
+    const itemIndex = duplicates.value[groupIndex].items.findIndex(item => item.id === itemId);
+    if (itemIndex !== -1) {
+      duplicates.value[groupIndex].items.splice(itemIndex, 1);
+      
+      // If only one item remains, remove the entire group
+      if (duplicates.value[groupIndex].items.length <= 1) {
+        duplicates.value.splice(groupIndex, 1);
+      }
+    }
+  } catch (error) {
+    console.error('Error deleting item:', error);
+    alert(t('deleteError'));
+  } finally {
+    deletingItems.value.delete(itemId);
+  }
+}
+
+async function deleteAllDuplicates() {
+  // Count total items to delete
+  const totalToDelete = duplicates.value.reduce((sum, group) => sum + (group.items.length - 1), 0);
+  
+  const confirmMessage = t('confirmDeleteAll').replace('{count}', totalToDelete);
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+
+  deletingAll.value = true;
+
+  try {
+    // Process groups in reverse order to avoid index shifting issues
+    for (let groupIndex = duplicates.value.length - 1; groupIndex >= 0; groupIndex--) {
+      const group = duplicates.value[groupIndex];
+      
+      // Delete all items except the first one (index 0)
+      for (let itemIndex = group.items.length - 1; itemIndex > 0; itemIndex--) {
+        const item = group.items[itemIndex];
+        deletingItems.value.add(item.id);
+        
+        try {
+          await api.delete(`/items/${selectedCollection.value}/${item.id}`);
+          group.items.splice(itemIndex, 1);
+        } catch (error) {
+          console.error(`Error deleting item ${item.id}:`, error);
+          // Continue with other items even if one fails
+        } finally {
+          deletingItems.value.delete(item.id);
+        }
+      }
+      
+      // Remove the group if only one item remains (or if all were deleted)
+      if (group.items.length <= 1) {
+        duplicates.value.splice(groupIndex, 1);
+      }
+    }
+  } catch (error) {
+    console.error('Error deleting all duplicates:', error);
+    alert(t('deleteAllError'));
+  } finally {
+    deletingAll.value = false;
+  }
+}
 </script>
 
 <style scoped>
 .step {
   margin-bottom: 30px;
   padding: 0 46px;
+}
+
+.step > h2 {
+  margin-bottom: 16px;
+}
+
+.button-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.button-group .v-button {
+  flex-shrink: 0;
+}
+
+.duplicates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.duplicate-group {
+  margin-bottom: 0;
+  padding: 16px;
+}
+
+.duplicate-group-header {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.duplicate-group-values {
+  margin-left: 8px;
 }
 
 .text-primary {
@@ -181,5 +313,44 @@ async function findDuplicates() {
   background: var(--theme--success-background, #e0ffe0);
   color: var(--theme--success-foreground, #067d06);
   border: 1px solid var(--theme--success-border, #9de89d);
+}
+
+.duplicate-item {
+  list-style: disc;
+}
+
+.duplicate-item-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.delete-button {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.delete-button :deep(.v-icon),
+.delete-button :deep(svg),
+.delete-button :deep(i) {
+  color: var(--primary) !important;
+}
+
+.delete-button:hover :deep(.v-icon),
+.delete-button:hover :deep(svg),
+.delete-button:hover :deep(i) {
+  color: var(--primary-125) !important;
+}
+
+.delete-button:disabled :deep(.v-icon),
+.delete-button:disabled :deep(svg),
+.delete-button:disabled :deep(i) {
+  color: var(--foreground-subdued) !important;
+  opacity: 0.5;
+}
+
+.delete-all-button {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 </style>
